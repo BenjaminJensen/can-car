@@ -4,3 +4,5 @@ __pycache__/
 .venv/
 venv/
 *.log
+log1.txt
+scan_log*.txt
