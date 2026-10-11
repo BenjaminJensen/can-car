@@ -17,6 +17,20 @@ def u16(d, o=0):
     return (d[o] << 8) | d[o + 1]
 
 
+def s16(d, o=0):
+    v = u16(d, o)
+    return v - 0x10000 if v >= 0x8000 else v
+
+
+def u24(d, o=0):
+    return (d[o] << 16) | (d[o + 1] << 8) | d[o + 2]
+
+
+def s32(d, o=0):
+    v = (d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]
+    return v - 0x100000000 if v >= 0x80000000 else v
+
+
 @dataclass(frozen=True)
 class Poll:
     name: str
@@ -184,7 +198,10 @@ class Car:
         resp = hex_bytes(e.cmd(f"22{p.pid:04X}"))
         if not resp or resp[0] != 0x62 or u16(resp, 1) != p.pid:
             return None   # negative response (7F ...), no data, or wrong frame
-        return p.decode(resp[3:])
+        try:
+            return p.decode(resp[3:])
+        except IndexError:
+            return None   # payload shorter than decoder expects (e.g. charger idle)
 
     def poll_all(self):
         for p in self.polls:
